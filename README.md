@@ -20,7 +20,6 @@ OdooGit is a specialized desktop Git client and environment management utility t
 * **Integrated Database Administration**: Manage local PostgreSQL databases directly from the GUI. Create, duplicate, and drop database environments, and designate templates. Bind specific git branches to target databases so your developer workspace updates its database connection automatically when checking out branches.
 * **Unified Odoo Server Panel**: Configure, execute, update, and test Odoo server processes. Manage Python virtual environments (venvs), addons paths, custom start arguments, module installation (`-i`), module upgrades (`-u`), and unit testing configurations.
 * **Interactive Logs Terminal**: View real-time server output inside a rich console formatting stream. Features proper line-wrapping, ANSI syntax highlighting, interactive `stdin` command injection supporting debuggers (e.g., `pdb` or `ipdb`), scrollback command history via arrow keys, and an inline send button.
-* **Flexible UI Controls**: Adjust interface layout using a draggable pane splitter with built-in boundaries, or toggle the terminal panel into full-screen mode to focus on debugging logs.
 
 ---
 
@@ -115,8 +114,6 @@ Accessible via the Odoo icon in the Repository Rail, this interface hides the si
   * **Live Stream**: Streams formatted Odoo server output in real-time. Automatically parses ANSI colors.
   * **Stdin Input Drawer**: Interactive prompt bar allowing developers to enter commands directly into active processes. Highly useful when Odoo is stopped on a `pdb` or `ipdb` breakpoint.
   * **Command History**: Retrieve previous commands inside the stdin bar using the Up and Down arrow keys.
-  * **Split Slider**: Click and drag the vertical splitter bar to resize the console width (constrained between 30% and 70% to maintain readability).
-  * **Full Screen Mode**: Maximize the terminal console to fill the entire panel when analyzing log streams, and restore the custom split layout when finished.
 
 ---
 
