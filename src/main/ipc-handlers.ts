@@ -20,10 +20,10 @@ function buildOdooCommand(opts: any): { execCmd: string; execArgs: string[]; ful
   const args: string[] = [];
   
   // DB Config
-  if (opts.dbUser) {
+  if (opts.dbUser && opts.dbUser !== 'odoo') {
     args.push(`--db_user=${opts.dbUser}`);
   }
-  if (opts.dbHost) {
+  if (opts.dbHost && opts.dbHost !== '127.0.0.1') {
     args.push(`--db_host=${opts.dbHost}`);
   }
   if (opts.dbPassword) {
@@ -580,7 +580,11 @@ export function registerIpcHandlers() {
     console.log('[odoo:listDbs] Executing command:', cmd);
     
     return new Promise<string[]>((resolve, reject) => {
-      exec(cmd, { env: { ...process.env, PGPASSWORD: dbPassword || '' } }, (err, stdout, stderr) => {
+      const env = { ...process.env };
+      if (dbPassword) {
+        env.PGPASSWORD = dbPassword;
+      }
+      exec(cmd, { env }, (err, stdout, stderr) => {
         if (err) {
           console.error('[odoo:listDbs] Primary command failed:', { cmd, stderr: stderr || '', error: err.message });
           // Fallback to passwordless local Unix socket psql
@@ -645,7 +649,11 @@ export function registerIpcHandlers() {
     }
     console.log('[odoo:createDb] Executing command:', cmd);
     return new Promise<void>((resolve, reject) => {
-      exec(cmd, { env: { ...process.env, PGPASSWORD: dbPassword || '' } }, (err, stdout, stderr) => {
+      const env = { ...process.env };
+      if (dbPassword) {
+        env.PGPASSWORD = dbPassword;
+      }
+      exec(cmd, { env }, (err, stdout, stderr) => {
         if (err) {
           console.error('[odoo:createDb] Command failed:', { cmd, stderr: stderr || '', error: err.message });
           // Fallback to passwordless local Unix socket createdb
@@ -708,7 +716,10 @@ export function registerIpcHandlers() {
     };
 
     console.log('[odoo:dropDb] Attempting to force drop database:', dbName);
-    const env = { ...process.env, PGPASSWORD: dbPassword || '' };
+    const env = { ...process.env };
+    if (dbPassword) {
+      env.PGPASSWORD = dbPassword;
+    }
 
     try {
       // 1. Try terminating connections using primary credentials
@@ -802,11 +813,19 @@ export function registerIpcHandlers() {
     event.sender.send('odoo:state', { status: 'starting', cmd: fullCommandString });
 
     // Spawn process
+    const odooEnv: NodeJS.ProcessEnv = {
+      ...process.env,
+      PYTHONUNBUFFERED: '1',
+    };
+    if (opts.dbPassword) {
+      odooEnv.PGPASSWORD = opts.dbPassword;
+    }
+
     odooProcess = spawn(execCmd, execArgs, {
       cwd: opts.repoPath,
       shell: true,
       detached: true,
-      env: { ...process.env, PYTHONUNBUFFERED: '1', PGPASSWORD: opts.dbPassword || '' }
+      env: odooEnv
     });
 
     odooStatus = 'running';
