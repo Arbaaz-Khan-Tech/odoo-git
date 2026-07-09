@@ -2269,7 +2269,7 @@ export function OdooPanel() {
           {/* Virtual Environment Selector & Preset Manager */}
           <div className="p-3 border-b border-border bg-surface/20 flex flex-col gap-3 shrink-0">
             {/* Presets section — comes first */}
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 tour-odoo-preset">
               <span className="font-semibold text-muted text-[10px] uppercase tracking-wider">
                 Configuration Preset
               </span>
@@ -2326,7 +2326,7 @@ export function OdooPanel() {
             </div>
 
             {/* Venv Row — below preset */}
-            <div className={`flex flex-col gap-1.5 border-t border-border/40 pt-2.5 tour-odoo-venv ${isCustomCommandActive ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className={`flex flex-col gap-1.5 border-t border-border/40 pt-2.5 ${isCustomCommandActive ? 'opacity-50 pointer-events-none' : ''}`}>
               <span className="font-semibold text-muted text-[11px] uppercase tracking-wider">
                 Python Virtual Environment (venv)
               </span>

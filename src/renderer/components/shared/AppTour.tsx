@@ -52,9 +52,9 @@ const TOUR_STEPS: TourStep[] = [
     panel: 'odoo',
   },
   {
-    title: 'Python Environments',
-    description: 'Configure and select different Python virtual environments (venv) to run multiple Odoo versions with their respective dependency trees.',
-    targetSelector: '.tour-odoo-venv',
+    title: 'Configuration Presets',
+    description: 'Save and apply custom configurations of databases, ports, virtual environments, and parameters. Switch presets easily to run, upgrade, or test different Odoo versions.',
+    targetSelector: '.tour-odoo-preset',
     position: 'bottom',
     panel: 'odoo',
   },
