@@ -32,6 +32,7 @@ import { GrepPanel } from './components/search/GrepPanel';
 // Shared
 import { Toast } from './components/shared/Toast';
 import { Modal } from './components/shared/Modal';
+import { AppTour } from './components/shared/AppTour';
 
 const NAV_ITEMS: { panel: Panel; label: string; icon: React.ReactNode }[] = [
   {
@@ -158,6 +159,18 @@ export default function App() {
   const repoState = useGitStore((s) => (activeRepoPath ? s.repoStates[activeRepoPath] : null));
   const [initialized, setInitialized] = useState(false);
   const [branchTab, setBranchTab] = useState<'list' | 'create' | 'multi'>('list');
+  const [showTour, setShowTour] = useState(false);
+
+  // Trigger tour if user has never seen it before and a repo is opened
+  useEffect(() => {
+    if (initialized && repos.length > 0) {
+      const hasSeenTour = localStorage.getItem('odoogit_hasSeenTour');
+      if (!hasSeenTour) {
+        const timer = setTimeout(() => setShowTour(true), 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [initialized, repos.length]);
 
   // Listen for terminal log updates from main process
   useEffect(() => {
@@ -338,7 +351,7 @@ export default function App() {
           <div className="flex flex-1 overflow-hidden">
             {/* Navigation Sidebar */}
             {activePanel !== 'settings' && activePanel !== 'odoo' && (
-              <div className="w-44 bg-surface border-r border-border flex flex-col shrink-0">
+              <div className="w-44 bg-surface border-r border-border flex flex-col shrink-0 tour-nav-sidebar">
                 {/* Current Branch Header */}
                 {status && (
                   <div className="p-3 border-b border-border">
@@ -410,7 +423,7 @@ export default function App() {
             )}
 
             {/* Main Panel */}
-            <div className="flex-1 overflow-hidden bg-bg relative">
+            <div className="flex-1 overflow-hidden bg-bg relative tour-main-panel">
               {/* Odoo Panel (kept mounted to preserve state & logs) */}
               <div className={`h-full w-full ${activePanel === 'odoo' ? 'block' : 'hidden'}`}>
                 <OdooPanel />
@@ -452,6 +465,7 @@ export default function App() {
       <StatusBar />
       <Toast />
       <Modal />
+      {showTour && <AppTour onClose={() => setShowTour(false)} />}
     </div>
   );
 }

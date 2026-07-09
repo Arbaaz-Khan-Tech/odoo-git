@@ -56,7 +56,7 @@ export function RepoRail() {
   };
 
   return (
-    <div className="h-12 bg-surface border-b border-border flex flex-row items-center px-4 gap-0 shrink-0 w-full select-none">
+    <div className="h-12 bg-surface border-b border-border flex flex-row items-center px-4 gap-0 shrink-0 w-full select-none tour-repo-rail">
       {/* Repository Tabs */}
       <div className="flex items-stretch gap-0 overflow-x-auto max-w-[65%] scrollbar-none h-full">
         {repos.map((repo) => {
@@ -181,7 +181,7 @@ export function RepoRail() {
 
       {/* Odoo DB Button */}
       <button
-        className={`h-full px-4 border-b-2 flex items-center gap-1.5 transition-all duration-150 text-[11px] font-semibold shrink-0 ${
+        className={`h-full px-4 border-b-2 flex items-center gap-1.5 transition-all duration-150 text-[11px] font-semibold shrink-0 tour-odoo-db ${
           activePanel === 'odoo'
             ? 'text-white border-accent bg-accent/5'
             : 'text-muted border-transparent hover:text-primary hover:bg-surface-hover/10'
@@ -200,7 +200,7 @@ export function RepoRail() {
 
       {/* Settings Button */}
       <button
-        className={`h-full px-4 border-b-2 flex items-center gap-1.5 transition-all duration-150 text-[11px] font-semibold shrink-0 mr-1 ${
+        className={`h-full px-4 border-b-2 flex items-center gap-1.5 transition-all duration-150 text-[11px] font-semibold shrink-0 mr-1 tour-settings ${
           activePanel === 'settings'
             ? 'text-white border-accent bg-accent/5'
             : 'text-muted border-transparent hover:text-primary hover:bg-surface-hover/10'

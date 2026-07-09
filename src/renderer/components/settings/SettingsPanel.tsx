@@ -519,6 +519,28 @@ export function SettingsPanel() {
               </div>
             </div>
 
+            {/* Help & Walkthrough */}
+            <div className="border border-border rounded-lg bg-surface/5">
+              <div className="bg-surface/50 px-4 py-2.5 border-b border-border rounded-t-lg">
+                <span className="text-[13px] font-semibold text-primary">Help & Tutorial</span>
+              </div>
+              <div className="p-4 space-y-3">
+                <p className="text-[11px] text-muted leading-relaxed">
+                  Need a refresher on how to navigate OdooGit? Restart the interactive walkthrough tour at any time.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('odoogit_hasSeenTour');
+                    window.location.reload();
+                  }}
+                  className="btn-surface text-[12px] px-4 py-1.5"
+                >
+                  Start App Tour
+                </button>
+              </div>
+            </div>
+
             {/* About */}
             <div className="border border-border rounded-lg bg-surface/5">
               <div className="bg-surface/50 px-4 py-2.5 border-b border-border rounded-t-lg">
