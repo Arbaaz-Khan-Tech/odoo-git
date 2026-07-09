@@ -5,12 +5,12 @@ OdooGit is a specialized desktop Git client and environment management utility t
 ---
 
 ## Table of Contents
-1. Key Features
-2. Architecture and Tech Stack
-3. Installation and Setup
-4. Application Tour
-5. Configuration and Customization
-6. Development Guide
+1. [Key Features](#key-features)
+2. [Architecture and Tech Stack](#architecture-and-tech-stack)
+3. [Installation and Setup](#installation-and-setup)
+4. [Application Tour](#application-tour)
+5. [Configuration and Customization](#configuration-and-customization)
+6. [Development Guide](#development-guide)
 
 ---
 
@@ -46,7 +46,7 @@ Before running or building OdooGit, ensure you have the following installed:
 ### Installation Options
 
 #### 1. Debian Package (Debian / Ubuntu / Linux Mint)
-For quick installation on Debian-based systems, download the packaged release `.deb` file and install it via `dpkg`:
+For quick installation on Debian-based systems, download the [Debian package](https://github.com/times-odoo/odoo-git/releases/download/ubuntu/odoogit_1.0.0_amd64.deb) and install it via `dpkg`:
 ```bash
 sudo dpkg -i odoogit_1.0.0_amd64.deb
 ```

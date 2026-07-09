@@ -377,8 +377,16 @@ export function SettingsPanel() {
                 </svg>
                 <span className="text-[13px] font-semibold text-primary">PostgreSQL Connection</span>
                 {isDbConnected !== null && (
-                  <span className={`ml-auto flex items-center gap-1.5 text-[11px] ${isDbConnected ? 'text-success' : 'text-danger'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isDbConnected ? 'bg-success animate-pulse' : 'bg-danger'}`} />
+                  <span className={`ml-auto flex items-center gap-1 text-[11px] ${isDbConnected ? 'text-success' : 'text-danger'}`}>
+                    {isDbConnected ? (
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
                     {isDbConnected ? 'Connected' : 'Disconnected'}
                   </span>
                 )}

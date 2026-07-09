@@ -267,12 +267,13 @@ export async function getBranches(repoPath: string) {
 
   const local = localResult.trim().split('\n').filter(Boolean).map((line: string) => {
     const [name, commit, head, workTree] = line.split('|||');
+    const safeName = (name || '').trim();
     return {
-      name: name.trim(),
-      current: head.trim() === '*',
-      linkedWorkTree: !!workTree?.trim(),
-      commit: commit.trim(),
-      label: name.trim(),
+      name: safeName,
+      current: (head || '').trim() === '*',
+      linkedWorkTree: !!(workTree || '').trim(),
+      commit: (commit || '').trim(),
+      label: safeName,
     };
   });
 
@@ -286,20 +287,21 @@ export async function getBranches(repoPath: string) {
   if (remoteResult.trim()) {
     for (const line of remoteResult.trim().split('\n').filter(Boolean)) {
       const [fullName, commit] = line.split('|||');
+      if (!fullName) continue;
       if (fullName.includes('/HEAD')) continue;
       const slashIndex = fullName.indexOf('/');
-      const remoteName = fullName.substring(0, slashIndex);
-      const branchName = fullName.substring(slashIndex + 1);
+      const remoteName = slashIndex !== -1 ? fullName.substring(0, slashIndex) : 'origin';
+      const branchName = slashIndex !== -1 ? fullName.substring(slashIndex + 1) : fullName;
 
       if (!remoteMap.has(remoteName)) {
         remoteMap.set(remoteName, []);
       }
       remoteMap.get(remoteName)!.push({
-        name: fullName.trim(),
+        name: (fullName || '').trim(),
         current: false,
         linkedWorkTree: false,
-        commit: commit.trim(),
-        label: branchName.trim(),
+        commit: (commit || '').trim(),
+        label: (branchName || '').trim(),
       });
     }
   }

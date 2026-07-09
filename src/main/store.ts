@@ -31,6 +31,9 @@ const store = new Store<StoreSchema>({
   },
 });
 
+// Clear any pending databases from previous sessions on startup
+store.set('pendingDbs', []);
+
 export function getSettings() {
   return {
     trigram: store.get('trigram'),

@@ -555,7 +555,10 @@ export function OdooPanel() {
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [tempInput, setTempInput] = useState('');
-  const [leftWidth, setLeftWidth] = useState(45);
+  const [leftWidth, setLeftWidth] = useState(() => {
+    const saved = localStorage.getItem('odoo_leftWidth');
+    return saved !== null ? parseFloat(saved) : 45;
+  });
   const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
   const processedLines = useMemo(() => {
@@ -1752,6 +1755,18 @@ export function OdooPanel() {
     try {
       await window.odoo.dropDb(dropTargetDb, dbUser, dbHost, dbPassword);
       addToast({ type: 'success', message: `Database ${dropTargetDb} dropped.` });
+      if (runDbName === dropTargetDb) {
+        setRunDbName('');
+        localStorage.removeItem('odoo_runDbName');
+      }
+      if (upDbName === dropTargetDb) {
+        setUpDbName('');
+        localStorage.removeItem('odoo_upDbName');
+      }
+      if (testDbName === dropTargetDb) {
+        setTestDbName('');
+        localStorage.removeItem('odoo_testDbName');
+      }
       refreshDbList(dbUser, dbHost, dbPassword, false);
     } catch (err: any) {
       addToast({ type: 'error', message: err.message || 'Failed to drop database.' });
@@ -1794,6 +1809,8 @@ export function OdooPanel() {
       addToast({ type: 'error', message: 'Failed to remove venv.' });
     }
   };
+
+
 
   const handleSendStdin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1866,6 +1883,7 @@ export function OdooPanel() {
       const deltaPercent = (deltaX / containerWidth) * 100;
       const newWidth = Math.min(Math.max(startWidth + deltaPercent, 30), 70);
       setLeftWidth(newWidth);
+      localStorage.setItem('odoo_leftWidth', newWidth.toString());
     };
 
     const handleMouseUp = () => {
