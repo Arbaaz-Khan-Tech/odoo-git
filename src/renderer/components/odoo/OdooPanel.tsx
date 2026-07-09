@@ -561,15 +561,29 @@ export function OdooPanel() {
   });
   const [isTerminalMaximized, setIsTerminalMaximized] = useState(false);
   const splitContainerRef = useRef<HTMLDivElement>(null);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
+
+  const handleScroll = () => {
+    const el = logsContainerRef.current;
+    if (!el) return;
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 45;
+    shouldAutoScrollRef.current = isAtBottom;
+  };
+
   const processedLines = useMemo(() => {
     const lines: string[] = [];
-    logs.forEach((log) => {
-      const parts = log.split('\n');
-      parts.forEach((part, idx) => {
-        if (idx === parts.length - 1 && part === '') return;
+    for (let i = 0; i < logs.length; i++) {
+      const parts = logs[i].split('\n');
+      for (let j = 0; j < parts.length; j++) {
+        const part = parts[j];
+        if (j === parts.length - 1 && part === '') continue;
         lines.push(part);
-      });
-    });
+      }
+    }
+    if (lines.length > 1000) {
+      return lines.slice(lines.length - 1000);
+    }
     return lines;
   }, [logs]);
   const [activeTab, setActiveTab] = useState<'run' | 'upgrade' | 'test'>('run');
@@ -1602,15 +1616,32 @@ export function OdooPanel() {
     init();
   }, []);
 
+  // A local ref to accumulate log chunks as they come from IPC
+  const logBufferRef = useRef<string[]>([]);
+  const flushTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Handle server logs and status changes from IPC
   useEffect(() => {
     const unsubLog = window.odoo.onLog((text) => {
       const cleanText = stripAnsi(text);
-      setLogs((prev) => {
-        const next = [...prev, cleanText];
-        if (next.length > 1000) return next.slice(next.length - 1000);
-        return next;
-      });
+      logBufferRef.current.push(cleanText);
+
+      // Schedule a flush at 16fps (every 60ms) to ensure smooth rendering and low CPU load
+      if (!flushTimerRef.current) {
+        flushTimerRef.current = setTimeout(() => {
+          const newChunks = logBufferRef.current;
+          logBufferRef.current = [];
+          flushTimerRef.current = null;
+
+          setLogs((prev) => {
+            let next = [...prev, ...newChunks];
+            if (next.length > 1000) {
+              next = next.slice(next.length - 1000);
+            }
+            return next;
+          });
+        }, 60);
+      }
     });
 
     const unsubState = window.odoo.onStateChange((state) => {
@@ -1624,13 +1655,17 @@ export function OdooPanel() {
     return () => {
       unsubLog();
       unsubState();
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+      }
     };
   }, []);
 
-  // Scroll to bottom when new logs come in
+  // Scroll to bottom when new logs come in (high performance setting)
   useEffect(() => {
-    if (terminalEndRef.current) {
-      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const el = logsContainerRef.current;
+    if (el && shouldAutoScrollRef.current) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [logs]);
 
@@ -2212,7 +2247,11 @@ export function OdooPanel() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-2.5 selection:bg-slate-700 select-text leading-tight whitespace-pre-wrap">
+            <div
+              ref={logsContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-auto p-2.5 selection:bg-slate-700 select-text leading-tight whitespace-pre-wrap"
+            >
               {processedLines.length === 0 ? (
                 <div className="text-slate-500 italic py-4 text-center">No terminal logs recorded yet. Start server to stream output.</div>
               ) : (
