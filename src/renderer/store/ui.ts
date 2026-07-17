@@ -84,6 +84,12 @@ interface UIStore {
   setAppBackgroundImage: (url: string) => void;
   appBackgroundOpacity: number;
   setAppBackgroundOpacity: (opacity: number) => void;
+  terminalTheme: string;
+  setTerminalTheme: (theme: string) => void;
+  terminalFontColor: string;
+  setTerminalFontColor: (color: string) => void;
+  terminalShowBg: boolean;
+  setTerminalShowBg: (show: boolean) => void;
 }
 
 let toastCounter = 0;
@@ -172,5 +178,20 @@ export const useUIStore = create<UIStore>((set) => ({
   setAppBackgroundOpacity: (opacity) => {
     localStorage.setItem('odoogit_appBackgroundOpacity', opacity.toString());
     set({ appBackgroundOpacity: opacity });
+  },
+  terminalTheme: localStorage.getItem('odoogit_terminalTheme') || 'default',
+  setTerminalTheme: (theme) => {
+    localStorage.setItem('odoogit_terminalTheme', theme);
+    set({ terminalTheme: theme });
+  },
+  terminalFontColor: localStorage.getItem('odoogit_terminalFontColor') || '#a8c7fa',
+  setTerminalFontColor: (color) => {
+    localStorage.setItem('odoogit_terminalFontColor', color);
+    set({ terminalFontColor: color });
+  },
+  terminalShowBg: localStorage.getItem('odoogit_terminalShowBg') === 'true',
+  setTerminalShowBg: (show) => {
+    localStorage.setItem('odoogit_terminalShowBg', show.toString());
+    set({ terminalShowBg: show });
   },
 }));

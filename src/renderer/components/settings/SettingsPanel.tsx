@@ -23,6 +23,12 @@ export function SettingsPanel() {
   const setAppBackgroundImage = useUIStore((s) => s.setAppBackgroundImage);
   const appBackgroundOpacity = useUIStore((s) => s.appBackgroundOpacity);
   const setAppBackgroundOpacity = useUIStore((s) => s.setAppBackgroundOpacity);
+  const terminalTheme = useUIStore((s) => s.terminalTheme);
+  const setTerminalTheme = useUIStore((s) => s.setTerminalTheme);
+  const terminalFontColor = useUIStore((s) => s.terminalFontColor);
+  const setTerminalFontColor = useUIStore((s) => s.setTerminalFontColor);
+  const terminalShowBg = useUIStore((s) => s.terminalShowBg);
+  const setTerminalShowBg = useUIStore((s) => s.setTerminalShowBg);
 
   const hexToRgb = (hex: string) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -636,10 +642,10 @@ export function SettingsPanel() {
               </div>
             </div>
 
-            {/* Background Image Settings */}
+            {/* Background & Terminal Settings */}
             <div className="border border-border rounded-lg bg-surface/5">
               <div className="bg-surface/50 px-4 py-2.5 border-b border-border rounded-t-lg">
-                <span className="text-[13px] font-semibold text-primary">App Background Image</span>
+                <span className="text-[13px] font-semibold text-primary">App Background & Terminal</span>
               </div>
               <div className="p-4 space-y-4">
                 <div>
@@ -665,6 +671,50 @@ export function SettingsPanel() {
                     onChange={(e) => setAppBackgroundOpacity(parseInt(e.target.value))}
                     className="w-full accent-accent"
                   />
+                </div>
+                <hr className="border-border/50 my-2" />
+                <div>
+                  <label className="text-[12px] text-muted mb-1 block">Terminal Theme</label>
+                  <select
+                    className="input-field w-full text-[12px] bg-bg"
+                    value={terminalTheme}
+                    onChange={(e) => setTerminalTheme(e.target.value)}
+                  >
+                    <option value="default">Default (Dark)</option>
+                    <option value="notebook">Notebook (White BG, Black Text)</option>
+                  </select>
+                </div>
+                <label className="flex items-start gap-2.5 text-[12px] text-primary cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={terminalShowBg}
+                    onChange={(e) => setTerminalShowBg(e.target.checked)}
+                    className="rounded border-border text-accent cursor-pointer focus:ring-accent bg-bg mt-0.5"
+                  />
+                  <div>
+                    <span className="font-semibold block">Show global background in terminal</span>
+                    <span className="text-[11px] text-muted block mt-0.5">
+                      Makes the terminal and Odoo panel backgrounds translucent to show the global app background image.
+                    </span>
+                  </div>
+                </label>
+                <div>
+                  <label className="text-[12px] text-muted mb-1 block">Terminal Font Color</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={terminalFontColor.startsWith('#') ? terminalFontColor : '#000000'}
+                      onChange={(e) => setTerminalFontColor(e.target.value)}
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={terminalFontColor}
+                      onChange={(e) => setTerminalFontColor(e.target.value)}
+                      className="input-field flex-1 text-[12px]"
+                      placeholder="#a8c7fa"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

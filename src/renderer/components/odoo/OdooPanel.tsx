@@ -45,7 +45,17 @@ const cleanLogLine = (rawLine: string) => {
 const ODOO_LOG_REGEX = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+(\d+)\s+(INFO|WARNING|ERROR|DEBUG|CRITICAL)\s+(\S+)\s+([\w\.\-]+):\s*(.*)$/;
 const WERKZEUG_REGEX = /^([\d\.]+) - - \[(.*?)\] "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH) (.*?) HTTP\/[0-9\.]+" (\d{3}) (.*)$/;
 
-const getLevelClass = (level: string) => {
+const getLevelClass = (level: string, theme: string) => {
+  if (theme === 'notebook') {
+    switch (level) {
+      case 'INFO': return 'text-emerald-700';
+      case 'WARNING': return 'text-amber-600';
+      case 'ERROR':
+      case 'CRITICAL': return 'text-rose-600 font-bold';
+      case 'DEBUG': return 'text-purple-700';
+      default: return 'text-slate-700';
+    }
+  }
   switch (level) {
     case 'INFO': return 'text-emerald-400';
     case 'WARNING': return 'text-amber-400';
@@ -56,8 +66,15 @@ const getLevelClass = (level: string) => {
   }
 };
 
-const getStatusClass = (statusStr: string) => {
+const getStatusClass = (statusStr: string, theme: string) => {
   const code = parseInt(statusStr, 10);
+  if (theme === 'notebook') {
+    if (code >= 200 && code < 300) return 'text-emerald-700 font-bold';
+    if (code >= 300 && code < 400) return 'text-sky-600 font-semibold';
+    if (code >= 400 && code < 500) return 'text-amber-600 font-bold';
+    if (code >= 500) return 'text-rose-700 font-extrabold';
+    return 'text-slate-500';
+  }
   if (code >= 200 && code < 300) return 'text-emerald-400 font-semibold';
   if (code >= 300 && code < 400) return 'text-sky-300';
   if (code >= 400 && code < 500) return 'text-amber-400 font-semibold';
@@ -65,7 +82,17 @@ const getStatusClass = (statusStr: string) => {
   return 'text-muted';
 };
 
-const getMethodClass = (method: string) => {
+const getMethodClass = (method: string, theme: string) => {
+  if (theme === 'notebook') {
+    switch (method) {
+      case 'GET': return 'text-sky-600 font-bold';
+      case 'POST': return 'text-teal-700 font-bold';
+      case 'PUT':
+      case 'PATCH': return 'text-purple-700 font-bold';
+      case 'DELETE': return 'text-rose-700 font-bold';
+      default: return 'text-yellow-600 font-bold';
+    }
+  }
   switch (method) {
     case 'GET': return 'text-sky-400 font-semibold';
     case 'POST': return 'text-teal-400 font-semibold';
@@ -76,35 +103,38 @@ const getMethodClass = (method: string) => {
   }
 };
 
-const renderFormattedMessage = (logger: string, message: string) => {
+const renderFormattedMessage = (logger: string, message: string, theme: string) => {
+  const isNotebook = theme === 'notebook';
   if (logger === 'werkzeug') {
     const match = message.match(WERKZEUG_REGEX);
     if (match) {
       const [_, ip, time, method, path, status, rest] = match;
       return (
         <span className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-muted/50 select-none shrink-0">{ip}</span>
-          <span className="text-muted/40 select-none shrink-0">[{time}]</span>
-          <span className={`${getMethodClass(method)} shrink-0`}>"{method}</span>
-          <span className="text-primary break-all">{path} HTTP/1.1"</span>
-          <span className={`${getStatusClass(status)} shrink-0`}>{status}</span>
-          <span className="text-muted/65 break-all">{rest}</span>
+          <span className={`${isNotebook ? 'text-slate-400' : 'text-muted/50'} select-none shrink-0`}>{ip}</span>
+          <span className={`${isNotebook ? 'text-slate-400' : 'text-muted/40'} select-none shrink-0`}>[{time}]</span>
+          <span className={`${getMethodClass(method, theme)} shrink-0`}>"{method}</span>
+          <span className={`${isNotebook ? 'text-slate-800' : 'text-primary'} break-all`}>{path} HTTP/1.1"</span>
+          <span className={`${getStatusClass(status, theme)} shrink-0`}>{status}</span>
+          <span className={`${isNotebook ? 'text-slate-500' : 'text-muted/65'} break-all`}>{rest}</span>
         </span>
       );
     }
   }
 
   if (message.toLowerCase().includes('deprecated') || message.toLowerCase().includes('warning')) {
-    return <span className="text-amber-300/90">{message}</span>;
+    return <span className={isNotebook ? 'text-amber-600' : 'text-amber-300/90'}>{message}</span>;
   }
   if (message.toLowerCase().includes('fail') || message.toLowerCase().includes('error')) {
-    return <span className="text-rose-300/90">{message}</span>;
+    return <span className={isNotebook ? 'text-rose-600 font-semibold' : 'text-rose-300/90'}>{message}</span>;
   }
 
-  return <span>{message}</span>;
+  return <span className={isNotebook ? 'text-slate-800' : ''}>{message}</span>;
 };
 
-const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPicked?: boolean; domId?: string }) => {
+const TerminalLine = React.memo(({ line, isPicked, domId, theme }: { line: string; isPicked?: boolean; domId?: string; theme?: string }) => {
+  const isNotebook = theme === 'notebook';
+  
   const content = (() => {
     if (!line.trim()) {
       return <div className="h-4" />;
@@ -118,10 +148,10 @@ const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPi
         const [_, num, cmdText] = ipythonInMatch;
         return (
           <div className="font-mono py-[1.5px] leading-relaxed select-text">
-            <span className="text-emerald-400 font-bold select-none">In [</span>
-            <span className="text-emerald-300 font-bold select-none">{num}</span>
-            <span className="text-emerald-400 font-bold select-none">]: </span>
-            <span className="text-slate-100 font-semibold">{cmdText}</span>
+            <span className={`${isNotebook ? 'text-emerald-700' : 'text-emerald-400'} font-bold select-none`}>In [</span>
+            <span className={`${isNotebook ? 'text-emerald-600' : 'text-emerald-300'} font-bold select-none`}>{num}</span>
+            <span className={`${isNotebook ? 'text-emerald-700' : 'text-emerald-400'} font-bold select-none`}>]: </span>
+            <span className={`${isNotebook ? 'text-slate-900' : 'text-slate-100'} font-semibold`}>{cmdText}</span>
           </div>
         );
       }
@@ -132,10 +162,10 @@ const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPi
         const [_, num, resText] = ipythonOutMatch;
         return (
           <div className="font-mono py-[1.5px] leading-relaxed select-text">
-            <span className="text-rose-500 font-bold select-none">Out[</span>
-            <span className="text-rose-400 font-bold select-none">{num}</span>
-            <span className="text-rose-500 font-bold select-none">]: </span>
-            <span className="text-amber-200/90 font-medium">{resText}</span>
+            <span className={`${isNotebook ? 'text-rose-700' : 'text-rose-500'} font-bold select-none`}>Out[</span>
+            <span className={`${isNotebook ? 'text-rose-600' : 'text-rose-400'} font-bold select-none`}>{num}</span>
+            <span className={`${isNotebook ? 'text-rose-700' : 'text-rose-500'} font-bold select-none`}>]: </span>
+            <span className={`${isNotebook ? 'text-amber-700' : 'text-amber-200/90'} font-medium`}>{resText}</span>
           </div>
         );
       }
@@ -145,11 +175,13 @@ const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPi
       if (pythonPromptMatch) {
         const [_, prompt, cmdText] = pythonPromptMatch;
         const isPrimary = prompt === '>>>';
-        const promptColor = isPrimary ? 'text-teal-400' : 'text-slate-500';
+        const promptColor = isNotebook 
+          ? (isPrimary ? 'text-teal-700' : 'text-slate-500')
+          : (isPrimary ? 'text-teal-400' : 'text-slate-500');
         return (
           <div className="font-mono py-[1.5px] leading-relaxed select-text">
             <span className={`${promptColor} font-bold select-none mr-2`}>{prompt}</span>
-            <span className="text-slate-100 font-semibold">{cmdText}</span>
+            <span className={`${isNotebook ? 'text-slate-900' : 'text-slate-100'} font-semibold`}>{cmdText}</span>
           </div>
         );
       }
@@ -157,7 +189,7 @@ const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPi
       // 1. (Pdb) prompt
       if (line.trim() === '(Pdb)') {
         return (
-          <div className="font-mono py-[1.5px] text-teal-400 font-bold tracking-wider select-none">
+          <div className={`font-mono py-[1.5px] ${isNotebook ? 'text-teal-700' : 'text-teal-400'} font-bold tracking-wider select-none`}>
             (Pdb)
           </div>
         );
@@ -168,13 +200,13 @@ const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPi
       if (dbgMatch) {
         const [_, filePath, lineNum, funcName] = dbgMatch;
         return (
-          <div className="font-mono py-[2px] border-b border-border/5 text-slate-350 leading-relaxed select-text">
-            <span className="text-teal-400 font-bold mr-1">&gt;</span>
-            <span className="text-teal-300 font-semibold hover:underline" title={filePath}>{filePath}</span>
-            <span className="text-muted/40 font-semibold">(</span>
-            <span className="text-amber-400 font-bold">{lineNum}</span>
-            <span className="text-muted/40 font-semibold">)</span>
-            <span className="text-sky-300 font-medium pl-1">{funcName}</span>
+          <div className={`font-mono py-[2px] border-b ${isNotebook ? 'border-slate-200 text-slate-700' : 'border-border/5 text-slate-350'} leading-relaxed select-text`}>
+            <span className={`${isNotebook ? 'text-teal-700' : 'text-teal-400'} font-bold mr-1`}>&gt;</span>
+            <span className={`${isNotebook ? 'text-teal-600' : 'text-teal-300'} font-semibold hover:underline`} title={filePath}>{filePath}</span>
+            <span className={`${isNotebook ? 'text-slate-400' : 'text-muted/40'} font-semibold`}>(</span>
+            <span className={`${isNotebook ? 'text-amber-600' : 'text-amber-400'} font-bold`}>{lineNum}</span>
+            <span className={`${isNotebook ? 'text-slate-400' : 'text-muted/40'} font-semibold`}>)</span>
+            <span className={`${isNotebook ? 'text-sky-600' : 'text-sky-300'} font-medium pl-1`}>{funcName}</span>
           </div>
         );
       }
@@ -183,9 +215,9 @@ const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPi
       if (line.startsWith('> ')) {
         const command = line.substring(2);
         return (
-          <div className="font-mono py-[1.5px] leading-relaxed select-text text-slate-200">
-            <span className="text-teal-400 font-bold select-none">&gt; </span>
-            <span className="font-semibold text-slate-100">{command}</span>
+          <div className={`font-mono py-[1.5px] leading-relaxed select-text ${isNotebook ? 'text-slate-800' : 'text-slate-200'}`}>
+            <span className={`${isNotebook ? 'text-teal-700' : 'text-teal-400'} font-bold select-none`}>&gt; </span>
+            <span className={`font-semibold ${isNotebook ? 'text-slate-900' : 'text-slate-100'}`}>{command}</span>
           </div>
         );
       }
@@ -193,22 +225,22 @@ const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPi
       // 4. Code lines under debugger: ->  source_code
       if (line.trim().startsWith('->')) {
         return (
-          <div className="font-mono py-[1.5px] text-yellow-250/90 font-medium pl-4 select-text leading-relaxed">
+          <div className={`font-mono py-[1.5px] ${isNotebook ? 'text-yellow-700 font-bold' : 'text-yellow-250/90 font-medium'} pl-4 select-text leading-relaxed`}>
             {line}
           </div>
         );
       }
 
       // Default formatting for other outputs (tracebacks, general outputs, pdb stdout)
-      let colorClass = 'text-slate-300/95';
+      let colorClass = isNotebook ? 'text-slate-800' : 'text-slate-300/95';
       if (line.toLowerCase().includes('traceback') || line.startsWith('  File "')) {
-        colorClass = 'text-rose-400/90';
+        colorClass = isNotebook ? 'text-rose-700 font-medium' : 'text-rose-400/90';
       } else if (line.toLowerCase().includes('error') || line.toLowerCase().includes('exception')) {
-        colorClass = 'text-rose-400 font-semibold';
+        colorClass = isNotebook ? 'text-rose-700 font-bold' : 'text-rose-400 font-semibold';
       } else if (line.toLowerCase().includes('warning')) {
-        colorClass = 'text-amber-300/90';
+        colorClass = isNotebook ? 'text-amber-700' : 'text-amber-300/90';
       } else if (line.startsWith('[App]')) {
-        colorClass = 'text-sky-400 font-semibold';
+        colorClass = isNotebook ? 'text-sky-700 font-bold' : 'text-sky-400 font-semibold';
       }
 
       return (
@@ -222,22 +254,22 @@ const TerminalLine = React.memo(({ line, isPicked, domId }: { line: string; isPi
 
     return (
       <div className="font-mono py-[1.5px] leading-relaxed break-all whitespace-pre-wrap select-text">
-        <span className="text-muted/40 select-none mr-2">{timestamp}</span>
-        <span className="text-blue-400/40 select-none mr-1.5 font-light">[{pid}]</span>
-        <span className={`mr-2 font-semibold ${getLevelClass(level)}`}>
+        <span className={`${isNotebook ? 'text-slate-500' : 'text-muted/40'} select-none mr-2`}>{timestamp}</span>
+        <span className={`${isNotebook ? 'text-blue-500/80' : 'text-blue-400/40'} select-none mr-1.5 font-light`}>[{pid}]</span>
+        <span className={`mr-2 font-semibold ${getLevelClass(level, theme || 'default')}`}>
           {level}
         </span>
-        <span className="text-cyan-400/60 mr-2 font-medium">[{db}]</span>
-        <span className="text-amber-400/60 mr-1.5 font-medium">{logger}:</span>
-        <span className="text-primary/90 pl-0.5">
-          {renderFormattedMessage(logger, message)}
+        <span className={`${isNotebook ? 'text-cyan-700 font-bold' : 'text-cyan-400/60 font-medium'} mr-2`}>[{db}]</span>
+        <span className={`${isNotebook ? 'text-amber-700 font-bold' : 'text-amber-400/60 font-medium'} mr-1.5`}>{logger}:</span>
+        <span className={`${isNotebook ? 'text-slate-900' : 'text-primary/90'} pl-0.5`}>
+          {renderFormattedMessage(logger, message, theme || 'default')}
         </span>
       </div>
     );
   })();
 
   return (
-    <div id={domId} className={`group relative border-b transition-colors pr-8 ${isPicked ? 'bg-accent/20 border-accent/50' : 'border-border/5 hover:bg-white/5'
+    <div id={domId} className={`group relative border-b transition-colors pr-8 ${isPicked ? (theme === 'notebook' ? 'bg-blue-100 border-blue-300' : 'bg-accent/20 border-accent/50') : (theme === 'notebook' ? 'border-slate-200 hover:bg-slate-50' : 'border-border/5 hover:bg-white/5')
       }`}>
       {content}
       {line.trim() && (
@@ -631,7 +663,18 @@ export function OdooPanel() {
 
   const repoState = useGitStore((s) => (communityRepoPath ? s.repoStates[communityRepoPath] : null));
   const currentBranch = repoState?.status?.current || 'detached';
-  const { addToast, showModal } = useUIStore();
+  const { addToast, showModal, terminalTheme, terminalFontColor, terminalShowBg } = useUIStore();
+
+  const terminalBgClass = useMemo(() => {
+    if (terminalTheme === 'notebook') return terminalShowBg ? 'bg-white/70 backdrop-blur-sm' : 'bg-[#fdfdfd] shadow-inner';
+    return terminalShowBg ? 'bg-black/40 backdrop-blur-sm' : 'bg-slate-950'; // default
+  }, [terminalTheme, terminalShowBg]);
+
+  const defaultTextColor = terminalTheme === 'notebook' ? '#000000' : '#e2e8f0';
+  
+  const terminalStyle = {
+    color: terminalFontColor || defaultTextColor
+  };
 
   // DB and Host Config
   const [dbUser, setDbUser] = useState('odoo');
@@ -2763,7 +2806,7 @@ export function OdooPanel() {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-bg select-none">
+    <div className={`flex flex-col h-full select-none ${terminalShowBg ? 'bg-transparent' : 'bg-bg/80'}`}>
       {/* Header Panel */}
       {!isBreakpointMode && (
         <div className="flex items-center justify-between border-b border-border px-4 py-3 shrink-0 bg-surface/30">
@@ -2834,8 +2877,11 @@ export function OdooPanel() {
           )}
 
           {/* Live Terminal Output Console */}
-          <div className="flex-1 flex flex-col bg-slate-950 font-mono text-[11px] text-slate-200 overflow-hidden">
-            <div className="px-3 py-2 bg-slate-900 border-b border-border/40 flex items-center justify-between shrink-0">
+          <div 
+            className={`flex-1 flex flex-col font-mono text-[11px] overflow-hidden ${terminalBgClass}`}
+            style={terminalStyle}
+          >
+            <div className={`px-3 py-2 border-b flex items-center justify-between shrink-0 ${terminalTheme === 'notebook' ? 'bg-slate-100 border-slate-300' : 'bg-slate-900 border-border/40'}`}>
               <div className="flex items-center gap-4">
                 <span className="text-slate-400 font-bold uppercase text-[9px]">Server Logs</span>
                 <div className="flex items-center bg-slate-800 rounded px-1 py-0.5 text-[10px]">
@@ -2896,7 +2942,7 @@ export function OdooPanel() {
                   {isTerminalMaximized ? (
                     <>
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5M15 9h4.5M15 9l6-6m-6 15v4.5M15 15h4.5M15 15l6 6m-6-6v4.5M9 15H4.5M9 15l-6 6"></path>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5M15 6V4.5M15 9h4.5M15 9l6-6m-6 15v4.5M15 15h4.5M15 15l6 6m-6-6v4.5M9 15H4.5M9 15l-6 6"></path>
                       </svg>
                       <span>Exit Full Screen</span>
                     </>
@@ -2939,8 +2985,8 @@ export function OdooPanel() {
             <div
               ref={logsContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-auto p-2.5 selection:bg-slate-700 select-text leading-tight whitespace-pre-wrap"
-              style={{ fontSize: `${terminalFontSize}px` }}
+              className={`flex-1 overflow-auto p-2.5 select-text leading-tight whitespace-pre-wrap ${terminalTheme === 'notebook' ? 'selection:bg-blue-200' : 'selection:bg-slate-700'}`}
+              style={{ fontSize: `${terminalFontSize}px`, color: terminalFontColor || undefined }}
             >
               {processedLines.length === 0 ? (
                 <div className="text-slate-500 italic py-4 text-center">No terminal logs recorded yet. Start server to stream output.</div>
@@ -2953,6 +2999,7 @@ export function OdooPanel() {
                       line={logLine.text}
                       domId={`terminal-line-${globalIdx}`}
                       isPicked={pickerMode !== 'none' && globalIdx === pickerIndex}
+                      theme={terminalTheme}
                     />
                   );
                 })
@@ -2962,8 +3009,8 @@ export function OdooPanel() {
 
             {/* Snippet Bar */}
             {serverStatus === 'running' && (isDebuggerOpen || isBreakpointMode) && (
-              <div className="flex items-center gap-2 px-3 py-1.5 border-t border-border/20 bg-slate-900/40 shrink-0 select-none overflow-x-auto scrollbar-none">
-                <span className="text-slate-400 font-bold uppercase text-[9px] tracking-wider shrink-0 mr-1 flex items-center gap-1">
+              <div className={`flex items-center gap-2 px-3 py-1.5 border-t shrink-0 select-none overflow-x-auto scrollbar-none ${terminalTheme === 'notebook' ? 'bg-slate-100 border-slate-300' : 'border-border/20 bg-slate-900/40'}`}>
+                <span className={`font-bold uppercase text-[9px] tracking-wider shrink-0 mr-1 flex items-center gap-1 ${terminalTheme === 'notebook' ? 'text-slate-600' : 'text-slate-400'}`}>
                   <svg className="w-3 h-3 text-teal-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
                   </svg>
@@ -3297,9 +3344,9 @@ export function OdooPanel() {
             {serverStatus === 'running' && (
               <form
                 onSubmit={handleSendStdin}
-                className="flex items-center gap-2 px-3 py-1.5 border-t border-border/20 bg-slate-950/80 shrink-0"
+                className={`shrink-0 flex items-center px-2 py-1.5 border-t relative z-10 ${terminalTheme === 'notebook' ? 'bg-white border-slate-300' : 'bg-slate-950 border-border/40'}`}
               >
-                <span className="text-accent font-semibold select-none shrink-0" style={{ fontSize: `${terminalFontSize}px` }}>&gt;</span>
+                <span className={`font-bold mr-2 select-none ${terminalTheme === 'notebook' ? 'text-teal-600' : 'text-teal-400'}`}>&gt;</span>
                 <input
                   ref={stdinInputRef}
                   type="text"
@@ -3335,9 +3382,9 @@ export function OdooPanel() {
                     }
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="Type input here and press Enter to send to process (e.g. for pdb breakpoint)..."
-                  className="flex-1 bg-transparent border-none font-mono text-slate-100 focus:outline-none focus:ring-0 p-0 placeholder:text-slate-600"
-                  style={{ fontSize: `${terminalFontSize}px` }}
+                  className={`flex-1 bg-transparent border-none outline-none font-mono ${terminalTheme === 'notebook' ? 'placeholder:text-slate-400' : 'placeholder:text-slate-600'}`}
+                  style={{ fontSize: `${terminalFontSize}px`, color: terminalFontColor || undefined }}
+                  placeholder={serverStatus === 'stopped' ? 'Start server to interact...' : isBreakpointMode ? 'Enter command...' : 'Enter Pdb command...'}
                 />
                 <button
                   type="submit"
